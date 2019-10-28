@@ -16,44 +16,30 @@ from Nodes.NodeProjection import NodeProjection
 
 class MyListener(frameQLParserListener):
     def __init__(self):
+        #Test dataset
+        data=[[0,50,'bus'],[1,100,'car'],[2,50,'van'],[3,150,'bus'],[4,120,'bus'],[5,130,'car'],[6,250,'bus'],[7,70,'van'],[8,110,'bus']]
+
         #Attributes
         self.listAttributes=['CLASS','REDNESS']
         
         #Build the query plan tree
-        self.crossNode=NodeCross(None)
+        # self.crossNode=NodeCross(None)
+        self.crossNode=NodeCross(data)
         self.conditionNode=NodeCondition(self.crossNode,None)
-        self.projectionNode=NodeProjection(self.conditionNode,None)
+        self.projectionNode=NodeProjection(self.conditionNode,[0,2])
     
         #Build the expression tree
         self.currentComparisonExpression=None
-        self.FIFO=[]
- 
-    #Build the expression tree
-    def enterLogicalExpression(self, ctx:frameQLParser.LogicalExpressionContext):
-        self.FIFO.append(ExpressionLogical([],None))
-    def exitLogicalExpression(self, ctx:frameQLParser.LogicalExpressionContext):
-        if len(self.FIFO)>1:
-            temp=self.FIFO.pop()
-            self.FIFO[-1].children.append(temp)
-        elif len(self.FIFO)==1:
-            self.conditionNode.expression=self.FIFO[0]
-    def enterLogicalOperator(self, ctx:frameQLParser.LogicalOperatorContext):
-        self.FIFO[-1].operator=ctx.getText()
+        self.currentLogicalExpression=None
         
-    def enterPredicateExpression(self, ctx:frameQLParser.PredicateExpressionContext):
-        if len(ctx.getText().split('AND'))>1 or len(ctx.getText().split('OR'))>1:
-            pass
-        else:
-            self.currentComparisonExpression=ExpressionComparison([None,None],None)
-    def exitPredicateExpression(self, ctx:frameQLParser.PredicateExpressionContext):
-        if len(ctx.getText().split('AND'))>1 or len(ctx.getText().split('OR'))>1:
-            pass
-        else:
-            self.FIFO[-1].children.append(self.currentComparisonExpression)
+    def enterLogicalOperator(self, ctx:frameQLParser.LogicalOperatorContext):
+        self.currentLogicalExpression.operator=ctx.getText()
+
+    def enterComparisonOperator(self, ctx:frameQLParser.ComparisonOperatorContext):
+        self.currentComparisonExpression.operator=ctx.getText()
+        
     def enterExpressionAtomPredicate(self, ctx:frameQLParser.ExpressionAtomPredicateContext):
-        if len(ctx.getText().split('AND'))>1 or len(ctx.getText().split('OR'))>1:
-            pass
-        elif self.currentComparisonExpression.children[0]==None:
+        if self.currentComparisonExpression.children[0]==None:
             if ctx.getText() in self.listAttributes:
                 self.currentComparisonExpression.children[0]=ExpressionTuple(ctx.getText())
             else:
@@ -62,12 +48,29 @@ class MyListener(frameQLParserListener):
             if ctx.getText() in self.listAttributes:
                 self.currentComparisonExpression.children[1]=ExpressionTuple(ctx.getText())
             else:
+                
                 self.currentComparisonExpression.children[1]=ExpressionConstant(ctx.getText())
-    def enterComparisonOperator(self, ctx:frameQLParser.ComparisonOperatorContext):
-        self.currentComparisonExpression.operator=ctx.getText()
-
-    #Build the query plan tree
     def enterSelectElements(self, ctx:frameQLParser.SelectElementsContext):
-        self.projectionNode.attributes=ctx.getText()
+        pass
+        # self.projectionNode.attributes=ctx.getText()
+        
     def enterTableSources(self, ctx:frameQLParser.TableSourcesContext):
-        self.crossNode.data=ctx.getText()
+        pass
+        # self.crossNode.data=ctx.getText()
+
+    def enterPredicateExpression(self, ctx:frameQLParser.PredicateExpressionContext):
+        self.currentComparisonExpression=ExpressionComparison([None,None],None)
+    def exitPredicateExpression(self, ctx:frameQLParser.PredicateExpressionContext):
+        if self.currentLogicalExpression.children[0]==None:
+            self.currentLogicalExpression.children[0]=self.currentComparisonExpression
+        elif self.currentLogicalExpression.children[0]!=None and self.currentLogicalExpression.children[1]==None:
+            self.currentLogicalExpression.children[1]=self.currentComparisonExpression
+    def enterLogicalExpression(self, ctx:frameQLParser.LogicalExpressionContext):
+        self.currentLogicalExpression=ExpressionLogical([None,None],None)
+
+    def exitLogicalExpression(self, ctx:frameQLParser.LogicalExpressionContext):
+        self.conditionNode.expression=self.currentLogicalExpression
+        self.conditionNode.children=self.crossNode
+
+
+        

@@ -13,4 +13,5 @@ class NodeProjection(Node):
             for e in self.attributes:
                 Tuple.append(datainput[i][e])
             data.append(Tuple)
+       
         return data

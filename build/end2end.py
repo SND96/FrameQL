@@ -9,6 +9,19 @@ from Nodes.NodeCondition import NodeCondition
 from Nodes.NodeCross import NodeCross
 
 #convert the query so that frameQLLexer can read it
+
+
+def traverse(tree, rule_names, indent = 0):
+    if tree.getText() == "<EOF>":
+        return
+    elif isinstance(tree, TerminalNodeImpl):
+        print("{0}TOKEN='{1}'".format("  " * indent, tree.getText()))
+    else:
+        print("{0}{1}".format("  " * indent, rule_names[tree.getRuleIndex()]))
+        for child in tree.children:
+
+            traverse(child, rule_names, indent + 1)
+
 def convert_query(query):
     new_query=query.split(' FROM')[0]+'\r\nFROM'+query.split('FROM')[1]
     new_query=new_query.split(' WHERE')[0]+'\r\nWHERE'+new_query.split('WHERE')[1]
@@ -27,15 +40,13 @@ def main(argv):
     walker = ParseTreeWalker()
     walker.walk(listener,tree)
     
-    print(tree.toStringTree(recog=parser))
+
     ExpressionTree=listener.currentLogicalExpression
     PlanTree=listener.projectionNode
-    print(ExpressionTree.children[0].children[0])
-    print(ExpressionTree.children[0].operator)
-    print(ExpressionTree.children[0].children[1].data)
-    print(ExpressionTree.children[1].children[0].attribute)
-    print(ExpressionTree.children[1].operator)
-    print(ExpressionTree.children[1].children[1].data)
+    Data_inp = listener.crossNode
+    print(PlanTree.processing())
+
  
 if __name__ == '__main__':
     main('test.txt')
+
