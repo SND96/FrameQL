@@ -8,6 +8,13 @@ from Nodes.NodeProjection import NodeProjection
 from Nodes.NodeCondition import NodeCondition
 from Nodes.NodeCross import NodeCross
 
+from Expressions.ExpressionComparison import ExpressionComparison
+from Expressions.ExpressionLogical import ExpressionLogical
+from Expressions.ExpressionTuple import ExpressionTuple
+from Expressions.ExpressionConstant import ExpressionConstant
+from Expressions.ExpressionJoin import ExpressionJoin
+from Expressions.ExpressionArithmetic import ExpressionArithmetic
+
 #convert the query so that frameQLLexer can read it
 
 
@@ -22,31 +29,67 @@ def traverse(tree, rule_names, indent = 0):
 
             traverse(child, rule_names, indent + 1)
 
-def convert_query(query):
-    new_query=query.split(' FROM')[0]+'\r\nFROM'+query.split('FROM')[1]
-    new_query=new_query.split(' WHERE')[0]+'\r\nWHERE'+new_query.split('WHERE')[1]
-    new_query=new_query+'\r\n'
-    return new_query
+def main(input):
+    input_stream = FileStream(input)
+    data=[[0,50,'bus'],[1,100,'car'],[2,50,'van'],[3,150,'bus'],[4,120,'bus'],[5,130,'car'],[6,250,'bus'],[7,70,'van'],[8,110,'bus']]
 
-def main(argv):
-    input_stream = FileStream(argv)
-    #query=convert_query('SELECT CLASS , REDNESS FROM TAIPAI WHERE CLASS = \'BUS\' AND REDNESS > 200')
-    #input_stream.strdata=query
     lexer = frameQLLexer(input_stream)
+
+    print("Raw SQL Query: ")
+    print(input_stream, '\n')
+
     stream = CommonTokenStream(lexer)
     parser = frameQLParser(stream)
     tree = parser.root()
-    listener = MyListener()
+    listener = MyListener(data)
+
     walker = ParseTreeWalker()
-    walker.walk(listener,tree)
-    
+    walker.walk(listener, tree)
+
+    print("Parse Tree: \n")
+    print(tree.toStringTree(recog=parser))
+    print('\n')
 
     ExpressionTree=listener.currentLogicalExpression
     PlanTree=listener.projectionNode
     Data_inp = listener.crossNode
-    print(PlanTree.processing())
+   
 
- 
+    def traverseExpTree(node, children=[]):
+
+        if hasattr(node, 'children'): 
+            if len(node.children) == 0:
+                return
+
+            for child in node.children:
+                traverseExpTree(child, children)
+        if hasattr(node, 'attribute'):
+            children.append(ExpressionConstant(node.attribute))
+            print(node.attribute, end = ', ')
+        elif hasattr(node, 'data'):
+            children.append(ExpressionConstant(node.data))
+            print(node.data, end = ', ')
+        elif hasattr(node, 'operator'):
+            if node.operator in ['+', '-', '*', '/']:
+                ExpressionArithmetic(children, node.operator)
+            else:
+                ExpressionComparison(children, node.operator)
+            children = []
+            print(node.operator, end = ', ')
+        else:
+            print(node, end = ', ')
+
+
+    print("PostFix Traversal of Expression Tree: \n")
+    traverseExpTree(ExpressionTree)
+    print('\n')
+   
 if __name__ == '__main__':
-    main('test.txt')
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Create a ArcHydro schema')
+    parser.add_argument('--input', metavar='path', required=True,
+                        help='the path to raw input file with SQL Query')
+    args = parser.parse_args()
+    main(input=args.input)
 
