@@ -30,6 +30,7 @@ FROM tableSources WHERE (expressions)
 ## How to test Arithmetic Operator
 
 Put your query in test.txt.
+
 Run 
 ```
 python end2end.py --input test.txt
@@ -38,6 +39,7 @@ python end2end.py --input test.txt
 ## How to test Join Operator
 
 Put your query in joinQuery.txt.
+
 Run 
 ```
 python end2end.py --input joinQuery.txt
