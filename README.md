@@ -26,43 +26,21 @@ FROM tableSources WHERE (expressions)
 ```
 
 
-
-
-# Grammar for frameQL
-We built a grammar using ANTLR
-
-
-## How to compile
-### Use ANTLR4 to construct the parser and the lexer
-
-```
-antlr4 -Dlanguage=Python3 *.g4 -o ../build
-```
-
-### Compile all java files in build
-Go to ../build and execute:
-```
-
-```
-
 ###
-## How to construct parse tree
-in build, run:
-```
-grun frameQL root -gui
-```
-It will ask for inputs in the command prompt
+## How to test Arithmetic Operator
 
-Or we can provide input txt file via:
+Put your query in test.txt.
+Run 
 ```
-grun frameQL root -gui query.txt
+python end2end.py --input test.txt
 ```
 
-In the end, grun will output the parse tree
+## How to test Join Operator
 
-## Problems
-### No runtime environemnt
-Just export CLASSPATH 	
+Put your query in joinQuery.txt.
+Run 
 ```
-export CLASSPATH=".:/usr/local/lib/antlr-4.7.1-complete.jar:$CLASSPATH"
+python end2end.py --input joinQuery.txt
 ```
+
+
