@@ -28,6 +28,7 @@ class MyListener(frameQLParserListener):
         self.conditionNode=NodeCondition(self.crossNode,None)
         self.projectionNode=NodeProjection(self.conditionNode,[0,2])
         self.count = 0
+        self.root=None
         #Build the expression tree
         self.currentComparisonExpression=None
         self.currentLogicalExpression=None
@@ -36,7 +37,7 @@ class MyListener(frameQLParserListener):
         
     def enterExpressionAtomPredicate(self, ctx:frameQLParser.ExpressionAtomPredicateContext):
         self.count += 1
-        self.listAttributes=['ID', 'CLASS', 'REDNESS']
+        self.listAttributes=['ID', 'CLASS', 'REDNESS', 'SPEED']
         
         if(self.currentComparisonExpression!=None):
             if self.currentComparisonExpression.children[0]==None:
@@ -69,23 +70,36 @@ class MyListener(frameQLParserListener):
     def enterPredicateExpression(self, ctx:frameQLParser.PredicateExpressionContext):
         self.count += 1
         self.currentComparisonExpression=ExpressionComparison([None,None],None)
+
     
     def exitPredicateExpression(self, ctx:frameQLParser.PredicateExpressionContext):
-        self.count += 1
-        if self.currentLogicalExpression.children[0]==None:
-            self.currentLogicalExpression.children[0]=self.currentComparisonExpression
-        elif self.currentLogicalExpression.children[0]!=None and self.currentLogicalExpression.children[1]==None:
-            self.currentLogicalExpression.children[1]=self.currentComparisonExpression
+        self.count += 1     
+        if self.currentLogicalExpression != None:
+            if self.currentLogicalExpression.children[0]==None:
+                self.currentLogicalExpression.children[0]=self.currentComparisonExpression
+            elif self.currentLogicalExpression.children[0]!=None and self.currentLogicalExpression.children[1]==None:
+                self.currentLogicalExpression.children[1]=self.currentComparisonExpression
 
     def enterLogicalExpression(self, ctx:frameQLParser.LogicalExpressionContext):
         self.count += 1
-        self.currentLogicalExpression=ExpressionLogical([None,None],None)
-        print(ctx.getText())
+        if self.root == None:
+            self.currentLogicalExpression=ExpressionLogical([None, None],None, None)
+            self.root = self.currentLogicalExpression
+        else:
+            if self.currentLogicalExpression.children[0]==None:
+                self.currentLogicalExpression.children[0]=ExpressionLogical([None, None], None, self.currentLogicalExpression)
+                self.currentLogicalExpression = self.currentLogicalExpression.children[0]
+            elif self.currentLogicalExpression.children[0]!=None and self.currentLogicalExpression.children[1]==None:
+                self.currentLogicalExpression.children[1]=ExpressionLogical([None, None], None, self.currentLogicalExpression)
+                self.currentLogicalExpression = self.currentLogicalExpression.children[1]
 
     def exitLogicalExpression(self, ctx:frameQLParser.LogicalExpressionContext):
         self.count += 1
         self.conditionNode.expression=self.currentLogicalExpression
         self.conditionNode.children=self.crossNode
+        if self.currentLogicalExpression.children[0]!=None and self.currentLogicalExpression.children[1]!=None:
+            self.currentLogicalExpression = self.currentLogicalExpression.parent
+
 
     def enterLogicalOperator(self, ctx:frameQLParser.LogicalOperatorContext):
         self.count += 1
@@ -94,6 +108,8 @@ class MyListener(frameQLParserListener):
     def enterComparisonOperator(self, ctx:frameQLParser.ComparisonOperatorContext):
         self.count += 1
         self.currentComparisonExpression.operator=ctx.getText()
+        if self.root == None:
+            self.root = self.currentComparisonExpression
 
     # Enter a parse tree produced by frameQLParser#tableName.
     def enterTableName(self, ctx:frameQLParser.TableNameContext):

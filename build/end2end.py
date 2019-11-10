@@ -50,7 +50,7 @@ def main(input):
     print(tree.toStringTree(recog=parser))
     print('\n')
 
-    ExpressionTree=listener.currentLogicalExpression
+    ExpressionTree=listener.root
     PlanTree=listener.projectionNode
     Data_inp = listener.crossNode
    
@@ -60,7 +60,6 @@ def main(input):
         if hasattr(node, 'children'): 
             if len(node.children) == 0:
                 return
-
             for child in node.children:
                 traverseExpTree(child, children)
         if hasattr(node, 'attribute'):
@@ -72,6 +71,8 @@ def main(input):
         elif hasattr(node, 'operator'):
             if node.operator in ['+', '-', '*', '/']:
                 ExpressionArithmetic(children, node.operator)
+            elif node.operator in ['AND', 'OR', 'NOT']:
+                ExpressionLogical(children, node.operator, node.parent)
             else:
                 ExpressionComparison(children, node.operator)
             children = []

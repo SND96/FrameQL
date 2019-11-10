@@ -1,9 +1,10 @@
 from .Expression import Expression
 
 class ExpressionLogical(Expression):
-    def __init__(self, children, operator):
+    def __init__(self, children, operator, parent):
         self.operator = operator
         self.children = children
+        self.parent = parent
     
     def evaluate(self, Tuple):
         datainput=[]
