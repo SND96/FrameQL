@@ -15,9 +15,13 @@ from Expressions.ExpressionConstant import ExpressionConstant
 from Expressions.ExpressionJoin import ExpressionJoin
 from Expressions.ExpressionArithmetic import ExpressionArithmetic
 
-#convert the query so that frameQLLexer can read it
+###
+# This file does an end to end test 
+# Input: SQL Query
+# Output: Expression Tree
+###
 
-
+# Function to traverse the expression tree
 def traverse(tree, rule_names, indent = 0):
     if tree.getText() == "<EOF>":
         return

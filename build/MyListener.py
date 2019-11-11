@@ -18,23 +18,17 @@ from Expressions.ExpressionArithmetic import ExpressionArithmetic
 
 class MyListener(frameQLParserListener):
     def __init__(self, data):
-    
-        #Attributes
-        self.listAttributes=['CLASS','REDNESS']
-        
-        #Build the query plan tree
-        # self.crossNode=NodeCross(None)
         self.crossNode=NodeCross(data)
         self.conditionNode=NodeCondition(self.crossNode,None)
         self.projectionNode=NodeProjection(self.conditionNode,[0,2])
         self.count = 0
         self.root=None
-        #Build the expression tree
+
         self.currentComparisonExpression=None
         self.currentLogicalExpression=None
         self.currentArithmeticExpression=None
     
-        
+    # Enter a parse tree produced by frameQLParser#ExpressionAtomPredicate
     def enterExpressionAtomPredicate(self, ctx:frameQLParser.ExpressionAtomPredicateContext):
         self.count += 1
         self.listAttributes=['ID', 'CLASS', 'REDNESS', 'SPEED']
@@ -50,11 +44,12 @@ class MyListener(frameQLParserListener):
                     self.currentComparisonExpression.children[1]=ExpressionTuple(ctx.getText())
                 else:
                     self.currentComparisonExpression.children[1]=ExpressionConstant(ctx.getText())
-
+    
+    # Exit a parse tree produced by frameQLParser#ExpressionAtomPredicate
     def exitExpressionAtomPredicate(self, ctx:frameQLParser.ExpressionAtomPredicateContext):
         self.count += 1
         
-       
+    # Enter a parse tree produced by frameQLParser#mathExpression.
     def enterMathExpressionAtom(self, ctx:frameQLParser.MathExpressionAtomContext):
         operator = ctx.mathOperator().getText()
         left = ExpressionTuple(ctx.getText().split(operator)[0])
@@ -66,12 +61,12 @@ class MyListener(frameQLParserListener):
             elif self.currentComparisonExpression.children[0] != None and self.currentComparisonExpression.children[1].data==(ctx.getText()):
                 self.currentComparisonExpression.children[1] = ExpressionArithmetic([left, right], operator)
 
-
+    # Enter a parse tree produced by frameQLParser#predicateExpression.
     def enterPredicateExpression(self, ctx:frameQLParser.PredicateExpressionContext):
         self.count += 1
         self.currentComparisonExpression=ExpressionComparison([None,None],None)
 
-    
+    # Exit a parse tree produced by frameQLParser#predicateExpression.    
     def exitPredicateExpression(self, ctx:frameQLParser.PredicateExpressionContext):
         self.count += 1     
         if self.currentLogicalExpression != None:
@@ -80,6 +75,7 @@ class MyListener(frameQLParserListener):
             elif self.currentLogicalExpression.children[0]!=None and self.currentLogicalExpression.children[1]==None:
                 self.currentLogicalExpression.children[1]=self.currentComparisonExpression
 
+    # Enter a parse tree produced by frameQLParser#logicalExpression.
     def enterLogicalExpression(self, ctx:frameQLParser.LogicalExpressionContext):
         self.count += 1
         if self.root == None:
@@ -93,6 +89,7 @@ class MyListener(frameQLParserListener):
                 self.currentLogicalExpression.children[1]=ExpressionLogical([None, None], None, self.currentLogicalExpression)
                 self.currentLogicalExpression = self.currentLogicalExpression.children[1]
 
+     # Exit a parse tree produced by frameQLParser#logicalExpression.              
     def exitLogicalExpression(self, ctx:frameQLParser.LogicalExpressionContext):
         self.count += 1
         self.conditionNode.expression=self.currentLogicalExpression
@@ -100,11 +97,12 @@ class MyListener(frameQLParserListener):
         if self.currentLogicalExpression.children[0]!=None and self.currentLogicalExpression.children[1]!=None:
             self.currentLogicalExpression = self.currentLogicalExpression.parent
 
-
+    # Enter a parse tree produced by frameQLParser#logicalOperator.
     def enterLogicalOperator(self, ctx:frameQLParser.LogicalOperatorContext):
         self.count += 1
         self.currentLogicalExpression.operator=ctx.getText()
 
+    # Enter a parse tree produced by frameQLParser#comparisonOperator.
     def enterComparisonOperator(self, ctx:frameQLParser.ComparisonOperatorContext):
         self.count += 1
         self.currentComparisonExpression.operator=ctx.getText()
@@ -115,6 +113,7 @@ class MyListener(frameQLParserListener):
     def enterTableName(self, ctx:frameQLParser.TableNameContext):
         self.tableName = ctx.getText()
 
+    # Enter a parse tree produced by frameQLParser#fullColumnName.
     def enterFullColumnName(self, ctx:frameQLParser.FullColumnNameContext):
         if '.' in ctx.getText():
             self.tableName = ctx.getText().split('.')[0]
@@ -122,7 +121,7 @@ class MyListener(frameQLParserListener):
         else:
             self.columnName = ctx.getText()
         
-
+     # Enter a parse tree produced by frameQLParser#innerJoin.
     def enterInnerJoin(self, ctx:frameQLParser.InnerJoinContext):
         self.currentJoinExpression = ExpressionComparison([None,None], None)
 
