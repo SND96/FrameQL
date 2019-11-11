@@ -29,20 +29,29 @@ FROM tableSources WHERE (expressions)
 ###
 ## How to test Arithmetic Operator
 
-Put your query in test.txt.
+Put your query in queryWithArithmeticOperations.txt
 
 Run 
 ```
-python end2end.py --input test.txt
+python end2end.py --input test/input/queryWithArithmeticOperations.txt
 ```
 
 ## How to test Join Operator
 
-Put your query in joinQuery.txt.
+Put your query in joinQuery.txt
 
 Run 
 ```
-python end2end.py --input joinQuery.txt
+python end2end.py --input test/input/joinQuery.txt
+```
+
+## How to test multiple logical operations
+
+Put your query in multipleLogicalQuery.txt
+
+Run 
+```
+python end2end.py --input test/input/multipleLogicalQuery.txt
 ```
 
 
